@@ -35,6 +35,12 @@ message Question {
   repeated string choices = 6; // multiple choice options
 }
 
+message Player {
+  string uuid =1; // universal unique identifier for the question
+  string username = 2; // the username of the player
+  int32 lastDifficulty = 3; // the difficulty of the last question
+}
+
 // The type of answer required for a question
 enum AnswerType {
   MULTIPLE_CHOICE = 0;

@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/Starter.iml" filepath="$PROJECT_DIR$/.idea/Starter.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/TriviaServer.main.iml" filepath="$PROJECT_DIR$/.idea/modules/TriviaServer.main.iml" />
     </modules>
   </component>
 </project>

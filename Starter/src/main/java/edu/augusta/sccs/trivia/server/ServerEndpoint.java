@@ -1,28 +1,40 @@
 package edu.augusta.sccs.trivia.server;
 
 import edu.augusta.sccs.trivia.*;
+import edu.augusta.sccs.trivia.mysql.DbQuestion;
+import edu.augusta.sccs.trivia.mysql.TriviaRepository;
 import io.grpc.Server;
 import io.grpc.Grpc;
 import io.grpc.InsecureServerCredentials;
 import io.grpc.stub.StreamObserver;
+import org.hibernate.SessionFactory;
+import org.hibernate.cfg.Configuration;
 
 import java.io.IOException;
-import java.util.UUID;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 public class ServerEndpoint {
 
     private static final Logger logger = Logger.getLogger(ServerEndpoint.class.getName());
-
-
     private Server server;
+
+    /*Provide the repository to the endpoint to handle all database operations*/
+    private final TriviaRepository triviaRepository;
+
+    /*Inject our constructor so that we can handle multiple database configurations*/
+    public ServerEndpoint(TriviaRepository triviaRepository){
+        this.triviaRepository = triviaRepository;
+    }
+
 
     private void start() throws IOException {
         /* The port on which the server should run */
         int port = 50051;
         server = Grpc.newServerBuilderForPort(port, InsecureServerCredentials.create())
-                .addService(new TrivaQuestionImpl())
+                //add our repository to the service
+                .addService(new TrivaQuestionImpl(triviaRepository))
                 .build()
                 .start();
         logger.info("Server started, listening on " + port);
@@ -57,14 +69,60 @@ public class ServerEndpoint {
 
 
     public static void main(String[] args) throws IOException, InterruptedException {
-        final ServerEndpoint server = new ServerEndpoint();
+        //creates database connection
+        SessionFactory sessionFactory = new Configuration()
+                .configure("/hibernate.cfg1.xml")
+                .buildSessionFactory();
+        TriviaRepository repository = new TriviaRepository(sessionFactory);
+
+        final ServerEndpoint server = new ServerEndpoint(repository);
         server.start();
         server.blockUntilShutdown();
     }
 
     static class TrivaQuestionImpl extends TriviaQuestionsGrpc.TriviaQuestionsImplBase {
 
+        // Repository instance for database operations
+        private final TriviaRepository triviaRepository;
+
+        // Constructor injection of repository
+        public TrivaQuestionImpl(TriviaRepository triviaRepository){
+            this.triviaRepository = triviaRepository;
+        }
+
+        /* Handles client requests for questions
+         * Gets questions from database and converts them to gRPC format */
         @Override
+        public void getQuestions(QuestionsRequest req, StreamObserver<QuestionsReply> responseObserver) {
+            // Get questions from database matching request criteria
+            List<DbQuestion> dbQuestions = triviaRepository.getQuestionsByDifficulty(
+                    req.getDifficulty(),
+                    req.getNumberOfQuestions()
+            );
+
+
+            // Convert database questions to gRPC format
+            QuestionsReply.Builder builder = QuestionsReply.newBuilder();
+            for (DbQuestion dbQuestion : dbQuestions) {
+                Question q = Question.newBuilder()
+                        .setUuid(dbQuestion.getUuid().toString())
+                        .setQuestion(dbQuestion.getQuestion())
+                        .setAnswer(dbQuestion.getAnswer())
+                        .setDifficulty(dbQuestion.getDifficulty())
+                        .setAnswerType(dbQuestion.getAnswerType())
+                        .build();
+                builder.addQuestions(q);
+            }
+
+            // Send response back to client
+            QuestionsReply reply = builder.build();
+            responseObserver.onNext(reply);
+            responseObserver.onCompleted();
+        }
+    }
+}
+
+/*@Override
         public void getQuestions(QuestionsRequest req, StreamObserver<QuestionsReply> responseObserver) {
             Question q = Question.newBuilder()
                     .setUuid(UUID.randomUUID().toString())
@@ -80,8 +138,5 @@ public class ServerEndpoint {
 
             responseObserver.onNext(reply);
             responseObserver.onCompleted();
-        }
-
-    }
-}
+        }*/
 
