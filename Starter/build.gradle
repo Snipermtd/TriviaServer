@@ -1,0 +1,81 @@
+plugins {
+    id 'java'
+    id 'com.google.protobuf' version '0.9.4'
+    id 'com.gradleup.shadow' version '8.3.5'
+}
+
+group = 'edu.augusta.sccs.trivia.mysql'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+    gradlePluginPortal()
+}
+
+java {
+    sourceCompatibility = 11
+    targetCompatibility = 11
+}
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:3.25.4"
+    }
+    plugins {
+        grpc {
+            artifact = 'io.grpc:protoc-gen-grpc-java:1.66.0'
+        }
+    }
+    generateProtoTasks {
+        all()*.plugins {
+            grpc {}
+        }
+    }
+}
+
+dependencies {
+
+    runtimeOnly 'io.grpc:grpc-netty-shaded:1.66.0'
+    implementation 'io.grpc:grpc-protobuf:1.66.0'
+    implementation 'io.grpc:grpc-stub:1.66.0'
+    compileOnly 'org.apache.tomcat:annotations-api:6.0.53'
+
+    implementation 'com.opencsv:opencsv:5.9'
+
+    implementation ('com.mysql:mysql-connector-j:9.1.0') {
+        exclude group: "com.google.protobuf", module: "protobuf-java"
+    }
+
+    implementation 'org.hibernate.orm:hibernate-core:6.6.1.Final'
+
+    implementation 'jakarta.annotation:jakarta.annotation-api:2.1.1'
+
+
+    implementation 'org.hibernate.validator:hibernate-validator:8.0.1.Final'
+    implementation 'org.glassfish:jakarta.el:4.0.2'
+
+
+    // logging via Log4j
+    implementation platform('org.apache.logging.log4j:log4j-bom:2.23.1')
+    implementation 'org.apache.logging.log4j:log4j-api'
+    runtimeOnly  'org.apache.logging.log4j:log4j-core'
+
+
+    // JPA Metamodel Generator
+    annotationProcessor 'org.hibernate.orm:hibernate-jpamodelgen:6.6.1.Final'
+
+
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+
+
+}
+
+test {
+    useJUnitPlatform()
+}
+
+tasks.jar {
+    manifest {
+        attributes["Main-Class"] = "edu.augusta.sccs.trivia.server.ServerEndpoint"
+    }
+}
