@@ -12,6 +12,8 @@ package trivia;
 service TriviaQuestions {
   // Provides questions
   rpc GetQuestions (QuestionsRequest) returns (QuestionsReply) {}
+  rpc GetPlayer (PlayerRequest) returns (PlayerReply) {}
+  rpc GetAnswer (AnswerRequest) returns (AnswerReply) {}
 }
 
 // The request message containing the user's name.
@@ -25,6 +27,24 @@ message QuestionsReply {
   repeated Question questions = 1; // the set of questions
 }
 
+message PlayerRequest {
+  string uuid = 1;
+}
+
+message PlayerReply {
+  Player player = 1;
+}
+
+message AnswerRequest {
+  string playerUuid = 1;
+  string questionUuid = 2;
+  string answer = 3;
+  AnswerType answerType = 4;
+}
+
+message AnswerReply {
+  bool correct = 1;
+}
 // a trivia question
 message Question {
   string uuid = 1; // universal unique identifier for the question

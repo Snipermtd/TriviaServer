@@ -8,4 +8,6 @@ import java.util.List;
 public interface QuestionDao {
     /*Returns a list containing a requested number of questions matching a difficulty level */
     List<DbQuestion> getQuestionsByDifficulty(int difficulty, int numQuestions);
+
+    DbQuestion getQuestion(String uuid);
 }

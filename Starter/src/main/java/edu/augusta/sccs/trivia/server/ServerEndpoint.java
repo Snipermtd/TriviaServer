@@ -1,7 +1,9 @@
 package edu.augusta.sccs.trivia.server;
 
 import edu.augusta.sccs.trivia.*;
+import edu.augusta.sccs.trivia.mysql.DbPlayer;
 import edu.augusta.sccs.trivia.mysql.DbQuestion;
+import edu.augusta.sccs.trivia.mysql.DbQuestionResponse;
 import edu.augusta.sccs.trivia.mysql.TriviaRepository;
 import io.grpc.Server;
 import io.grpc.Grpc;
@@ -9,7 +11,9 @@ import io.grpc.InsecureServerCredentials;
 import io.grpc.stub.StreamObserver;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
@@ -86,11 +90,11 @@ public class ServerEndpoint {
         /* Handles client requests for questions
          * Gets questions from database and converts them to gRPC format */
         @Override
-        public void getQuestions(QuestionsRequest req, StreamObserver<QuestionsReply> responseObserver) {
+        public void getQuestions(QuestionsRequest request, StreamObserver<QuestionsReply> responseObserver) {
             // Get questions from database matching request criteria
             List<DbQuestion> dbQuestions = triviaRepository.getQuestionsByDifficulty(
-                    req.getDifficulty(),
-                    req.getNumberOfQuestions()
+                    request.getDifficulty(),
+                    request.getNumberOfQuestions()
             );
 
 
@@ -110,6 +114,54 @@ public class ServerEndpoint {
             // Send response back to client
             QuestionsReply reply = builder.build();
             responseObserver.onNext(reply);
+            responseObserver.onCompleted();
+        }
+
+        @Override
+        public void getPlayer(PlayerRequest request,  StreamObserver<PlayerReply> responseObserver) {
+            // Get player from database matching given player uuid
+            DbPlayer dbPlayer = triviaRepository.findByUuid(request.getUuid());
+
+            // Convert database Player to gRPC format
+            PlayerReply.Builder builder = PlayerReply.newBuilder();
+            Player player = Player.newBuilder()
+                    .setUuid(dbPlayer.getUuid().toString())
+                    .setUsername(dbPlayer.getUsername())
+                    .setLastDifficulty(dbPlayer.getLastDifficulty())
+                    .build();
+
+            builder.setPlayer(player);
+
+            // Send response back to client
+            PlayerReply reply = builder.build();
+            responseObserver.onNext(reply);
+            responseObserver.onCompleted();
+        }
+
+        @Override
+        public void getAnswer(AnswerRequest request, StreamObserver<AnswerReply> responseObserver) {
+            DbPlayer dbPlayer = triviaRepository.findByUuid(request.getPlayerUuid());
+            DbQuestion dbQuestion = triviaRepository.getQuestion(request.getQuestionUuid());
+
+            /*implement question validation logic*/
+            boolean isCorrectAnswer = dbQuestion.getAnswer().equalsIgnoreCase(request.getAnswer());
+
+            // Create Grpc Response
+            AnswerReply answerReply = AnswerReply.newBuilder()
+                    .setCorrect(isCorrectAnswer)
+                    .build();
+
+
+            DbQuestionResponse questionResponse = new DbQuestionResponse();
+            questionResponse.setUuid(UUID.randomUUID());
+            questionResponse.setPlayer(dbPlayer);
+            questionResponse.setQuestion(dbQuestion);
+            questionResponse.setCorrect(isCorrectAnswer);
+            questionResponse.setTimestamp(Instant.now());
+
+            triviaRepository.save(questionResponse);
+
+            responseObserver.onNext(answerReply);
             responseObserver.onCompleted();
         }
     }

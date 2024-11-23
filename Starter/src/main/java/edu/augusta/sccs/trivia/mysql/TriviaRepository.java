@@ -57,6 +57,22 @@ public class TriviaRepository implements PlayerDao, QuestionDao, QuestionRespons
         return questions; // return result of the operation
     }
 
+    @Override
+    public DbQuestion getQuestion(String uuid){
+
+        Session session = sessionFactories.get(0).openSession(); //Open our connection to the database
+        session.beginTransaction();  // Ensures atomicity of database operations
+        CriteriaBuilder builder = session.getCriteriaBuilder(); // Creates type-safe queries, prevents sql injection
+        CriteriaQuery<DbQuestion> cq = builder.createQuery(DbQuestion.class); // cq is a CriteriaQuery object that contains DbQuestions
+        Root<DbQuestion> root = cq.from(DbQuestion.class); // tells cs which table to query
+        cq.select(root); // select all columns
+        cq.where(builder.equal(root.get("uuid"), uuid.toString())); // where difficulty matches our parameter
+        DbQuestion question = session.createQuery(cq).getSingleResult(); // execute our search
+        session.getTransaction().commit(); // commit the transaction
+        session.close(); // close the session
+        return question; // return result of the operation
+    }
+
 
     @Override
     public DbPlayer findByUuid(String uuid) {
@@ -71,6 +87,12 @@ public class TriviaRepository implements PlayerDao, QuestionDao, QuestionRespons
 
     @Override
     public void save(DbQuestionResponse response) {
-        // Implementation
+        Session session = sessionFactories.get(0).openSession(); //Open our connection to the database
+        session.beginTransaction();  // Ensures atomicity of database operations
+
+        session.persist(response); // saves response to the database.
+
+        session.getTransaction().commit(); // commit the transaction
+        session.close(); // close the session
     }
 }
