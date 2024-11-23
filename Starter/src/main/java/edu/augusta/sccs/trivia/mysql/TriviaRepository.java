@@ -87,7 +87,7 @@ public class TriviaRepository implements PlayerDao, QuestionDao, QuestionRespons
 
     @Override
     public void save(DbQuestionResponse response) {
-        Session session = sessionFactories.get(0).openSession(); //Open our connection to the database
+        Session session = selectSessionFactoryByPlayer(response.getPlayer()).openSession(); // put response in same database as the player who made it.
         session.beginTransaction();  // Ensures atomicity of database operations
 
         session.persist(response); // saves response to the database.
