@@ -16,25 +16,28 @@ service TriviaQuestions {
   rpc GetAnswer (AnswerRequest) returns (AnswerReply) {}
 }
 
-// The request message containing the user's name.
+// The request message containing the number of questions and difficulty.
 message QuestionsRequest {
   int32 numberOfQuestions = 1; // the number of questions to return
   int32 difficulty = 2; // the difficulty level of the questions
 }
 
-// The response message containing the greetings
+// The reply message containing the number of questions and difficulty requested
 message QuestionsReply {
   repeated Question questions = 1; // the set of questions
 }
 
+// The request message containing the user uuid
 message PlayerRequest {
   string uuid = 1;
 }
 
+// The reply message containing the player
 message PlayerReply {
   Player player = 1;
 }
 
+// The request message containing the player, question, and the players answer
 message AnswerRequest {
   string playerUuid = 1;
   string questionUuid = 2;
@@ -42,9 +45,11 @@ message AnswerRequest {
   AnswerType answerType = 4;
 }
 
+// The reply message containing the result of verifying the answer
 message AnswerReply {
   bool correct = 1;
 }
+
 // a trivia question
 message Question {
   string uuid = 1; // universal unique identifier for the question
@@ -55,6 +60,7 @@ message Question {
   repeated string choices = 6; // multiple choice options
 }
 
+// a trivia player
 message Player {
   string uuid =1; // universal unique identifier for the question
   string username = 2; // the username of the player

@@ -143,7 +143,7 @@ public class ServerEndpoint {
             DbPlayer dbPlayer = triviaRepository.findByUuid(request.getPlayerUuid());
             DbQuestion dbQuestion = triviaRepository.getQuestion(request.getQuestionUuid());
 
-            /*implement question validation logic*/
+            // validate answer
             boolean isCorrectAnswer = dbQuestion.getAnswer().equalsIgnoreCase(request.getAnswer());
 
             // Create Grpc Response
@@ -151,7 +151,7 @@ public class ServerEndpoint {
                     .setCorrect(isCorrectAnswer)
                     .build();
 
-
+            // Create DbQuestionResponse with given Player answer
             DbQuestionResponse questionResponse = new DbQuestionResponse();
             questionResponse.setUuid(UUID.randomUUID());
             questionResponse.setPlayer(dbPlayer);
@@ -159,8 +159,10 @@ public class ServerEndpoint {
             questionResponse.setCorrect(isCorrectAnswer);
             questionResponse.setTimestamp(Instant.now());
 
+            // persist question response
             triviaRepository.save(questionResponse);
 
+            // Send response back to client
             responseObserver.onNext(answerReply);
             responseObserver.onCompleted();
         }
