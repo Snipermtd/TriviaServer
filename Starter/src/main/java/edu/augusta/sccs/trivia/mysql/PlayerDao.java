@@ -5,7 +5,7 @@ package edu.augusta.sccs.trivia.mysql;
 */
 public interface PlayerDao {
     /*finds a player when given a String uuid*/
-    DbPlayer findByUuid(String uuid);
+    DbPlayer findPlayerByUuid(String uuid);
 
     /*save a player to the database*/
     void save(DbPlayer player);

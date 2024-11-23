@@ -120,7 +120,7 @@ public class ServerEndpoint {
         @Override
         public void getPlayer(PlayerRequest request,  StreamObserver<PlayerReply> responseObserver) {
             // Get player from database matching given player uuid
-            DbPlayer dbPlayer = triviaRepository.findByUuid(request.getUuid());
+            DbPlayer dbPlayer = triviaRepository.findPlayerByUuid(request.getUuid());
 
             // Convert database Player to gRPC format
             PlayerReply.Builder builder = PlayerReply.newBuilder();
@@ -140,7 +140,7 @@ public class ServerEndpoint {
 
         @Override
         public void getAnswer(AnswerRequest request, StreamObserver<AnswerReply> responseObserver) {
-            DbPlayer dbPlayer = triviaRepository.findByUuid(request.getPlayerUuid());
+            DbPlayer dbPlayer = triviaRepository.findPlayerByUuid(request.getPlayerUuid());
             DbQuestion dbQuestion = triviaRepository.getQuestion(request.getQuestionUuid());
 
             // validate answer

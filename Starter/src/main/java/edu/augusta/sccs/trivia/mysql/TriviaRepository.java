@@ -10,6 +10,7 @@ import org.hibernate.cfg.Configuration;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /*Concrete implementation of our DAO interfaces*/
 public class TriviaRepository implements PlayerDao, QuestionDao, QuestionResponseDao {
@@ -34,6 +35,13 @@ public class TriviaRepository implements PlayerDao, QuestionDao, QuestionRespons
     private SessionFactory selectSessionFactoryByPlayer(DbPlayer dbPlayer){
         int playerHash = Math.abs(dbPlayer.getUuid().hashCode()); //hash the uuid and store the result
         int index = playerHash % sessionFactories.size(); // get the correct sessionFactory with the hashed uuid
+
+        return sessionFactories.get(index);
+    }
+
+    private SessionFactory selectSessionFactoryByUuid(UUID uuid){
+        int uuidHash = Math.abs(uuid.hashCode());
+        int index = uuidHash % sessionFactories.size();
 
         return sessionFactories.get(index);
     }
@@ -66,7 +74,7 @@ public class TriviaRepository implements PlayerDao, QuestionDao, QuestionRespons
         CriteriaQuery<DbQuestion> cq = builder.createQuery(DbQuestion.class); // cq is a CriteriaQuery object that contains DbQuestions
         Root<DbQuestion> root = cq.from(DbQuestion.class); // tells cs which table to query
         cq.select(root); // select all columns
-        cq.where(builder.equal(root.get("uuid"), uuid.toString())); // where difficulty matches our parameter
+        cq.where(builder.equal(root.get("uuid"), uuid.toString())); // where question uuid matches our parameter
         DbQuestion question = session.createQuery(cq).getSingleResult(); // execute our search
         session.getTransaction().commit(); // commit the transaction
         session.close(); // close the session
@@ -75,14 +83,27 @@ public class TriviaRepository implements PlayerDao, QuestionDao, QuestionRespons
 
 
     @Override
-    public DbPlayer findByUuid(String uuid) {
-        // Implementation
-        return null;
+    public DbPlayer findPlayerByUuid(String uuid) {
+        Session session = selectSessionFactoryByUuid(UUID.fromString(uuid)).openSession();
+        session.beginTransaction();  // Ensures atomicity of database operations
+        CriteriaBuilder builder = session.getCriteriaBuilder(); // Creates type-safe queries, prevents sql injection
+        CriteriaQuery<DbPlayer> cq = builder.createQuery(DbPlayer.class); // cq is a CriteriaQuery object that contains DbQuestions
+        Root<DbPlayer> root = cq.from(DbPlayer.class); // tells cs which table to query
+        cq.select(root); // select all columns
+        cq.where(builder.equal(root.get("uuid"), uuid.toString())); // where player uuid matches our parameter
+        DbPlayer player = session.createQuery(cq).getSingleResult(); // execute our search
+        session.getTransaction().commit(); // commit the transaction
+        session.close(); // close the session
+        return player; // return result of the operation
     }
 
     @Override
     public void save(DbPlayer player) {
-        // Implementation
+        Session session = selectSessionFactoryByPlayer(findPlayerByUuid(player.getUuid().toString())).openSession();
+
+        session.persist(player);
+
+        session.getTransaction().commit();
     }
 
     @Override
