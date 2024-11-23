@@ -7,8 +7,6 @@ import io.grpc.Server;
 import io.grpc.Grpc;
 import io.grpc.InsecureServerCredentials;
 import io.grpc.stub.StreamObserver;
-import org.hibernate.SessionFactory;
-import org.hibernate.cfg.Configuration;
 
 import java.io.IOException;
 import java.util.List;
@@ -23,9 +21,9 @@ public class ServerEndpoint {
     /*Provide the repository to the endpoint to handle all database operations*/
     private final TriviaRepository triviaRepository;
 
-    /*Inject our constructor so that we can handle multiple database configurations*/
-    public ServerEndpoint(TriviaRepository triviaRepository){
-        this.triviaRepository = triviaRepository;
+    /*database configurations are handled in TriviaRepository, we just ensure our server has one*/
+    public ServerEndpoint(){
+        this.triviaRepository =  new TriviaRepository();
     }
 
 
@@ -69,13 +67,8 @@ public class ServerEndpoint {
 
 
     public static void main(String[] args) throws IOException, InterruptedException {
-        //creates database connection
-        SessionFactory sessionFactory = new Configuration()
-                .configure("/hibernate.cfg1.xml")
-                .buildSessionFactory();
-        TriviaRepository repository = new TriviaRepository(sessionFactory);
 
-        final ServerEndpoint server = new ServerEndpoint(repository);
+        final ServerEndpoint server = new ServerEndpoint();
         server.start();
         server.blockUntilShutdown();
     }
@@ -121,22 +114,4 @@ public class ServerEndpoint {
         }
     }
 }
-
-/*@Override
-        public void getQuestions(QuestionsRequest req, StreamObserver<QuestionsReply> responseObserver) {
-            Question q = Question.newBuilder()
-                    .setUuid(UUID.randomUUID().toString())
-                    .setQuestion("What is the name of the Hurricane that hit Augusta, GA in 2024 causing Augusta University to close?")
-                    .setAnswer("Helene")
-                    .setDifficulty(1)
-                    .setAnswerType(AnswerType.SINGLE_WORD_ANSWER)
-                    .build();
-
-            QuestionsReply.Builder builder = QuestionsReply.newBuilder();
-            builder.addQuestions(q);
-            QuestionsReply reply = builder.build();
-
-            responseObserver.onNext(reply);
-            responseObserver.onCompleted();
-        }*/
 
